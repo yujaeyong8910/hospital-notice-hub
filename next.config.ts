@@ -1,9 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['cheerio'],
-  },
+  serverExternalPackages: ['cheerio'],
 }
 
 export default nextConfig

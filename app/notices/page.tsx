@@ -88,7 +88,7 @@ function NoticesContent() {
                     'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                     orgFilter === id ? meta.badge + ' ring-2 ring-offset-1' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   )}
-                  style={orgFilter === id ? { ringColor: meta.color } : {}}
+                  style={orgFilter === id ? { outline: `2px solid ${meta.color}` } : {}}
                 >
                   {meta.label}
                 </button>
