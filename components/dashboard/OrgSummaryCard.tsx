@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { Notice } from '@/types'
