@@ -3,11 +3,20 @@ import { CrawledNotice } from '@/types'
 
 const BASE = 'https://www.hira.or.kr'
 
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export async function scrapeHIRA(): Promise<CrawledNotice[]> {
   const endpoints = [
-    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030001000100&brdBltNo=`, category: '공지사항' },
+    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030001000100`, category: '공지사항' },
     { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030001000200`, category: '보도자료' },
-    { url: `${BASE}/main/judgment/getJobList.do`, category: '심사기준' },
+    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030002000100`, category: '심사기준' },
   ]
 
   const all: CrawledNotice[] = []
@@ -18,6 +27,8 @@ export async function scrapeHIRA(): Promise<CrawledNotice[]> {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           Referer: BASE,
+          Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'ko-KR,ko;q=0.9',
         },
         signal: AbortSignal.timeout(12000),
       })
@@ -31,15 +42,18 @@ export async function scrapeHIRA(): Promise<CrawledNotice[]> {
         const title = $a.text().trim()
         const href = $a.attr('href') ?? ''
         if (!title || title.length < 3) return
+        if (!href || href === '#' || href.startsWith('javascript:')) return
 
         const fullUrl = href.startsWith('http')
           ? href
           : href.startsWith('/')
           ? `${BASE}${href}`
-          : ep.url
+          : `${BASE}/${href}`
+
+        if (!isValidUrl(fullUrl)) return
 
         const dateText = $el.find('.date, td:nth-child(4), td:last-child').first().text().trim()
-        const isImportant = $el.hasClass('notice') || $el.find('.mark-notice').length > 0
+        const isImportant = $el.hasClass('notice') || $el.find('.mark-notice, .ico_notice').length > 0
 
         all.push({
           organization_id: 'hira',

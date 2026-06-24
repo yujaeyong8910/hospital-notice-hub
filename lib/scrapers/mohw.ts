@@ -3,11 +3,20 @@ import { CrawledNotice } from '@/types'
 
 const BASE = 'https://www.mohw.go.kr'
 
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export async function scrapeMOHW(): Promise<CrawledNotice[]> {
-  // 보건복지부 공지사항 & 보도자료
   const endpoints = [
     { url: `${BASE}/react/al/salalm0301ls.do?menuId=MENU_NEW_01_02`, category: '공지사항' },
     { url: `${BASE}/react/al/salalm0101ls.do?menuId=MENU_NEW_04_01`, category: '보도자료' },
+    { url: `${BASE}/react/al/salalm0401ls.do?menuId=MENU_NEW_04_04`, category: '법령·훈령' },
   ]
 
   const all: CrawledNotice[] = []
@@ -18,6 +27,7 @@ export async function scrapeMOHW(): Promise<CrawledNotice[]> {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'ko-KR,ko;q=0.9',
         },
         signal: AbortSignal.timeout(12000),
       })
@@ -30,11 +40,15 @@ export async function scrapeMOHW(): Promise<CrawledNotice[]> {
         const $a = $el.find('a').first()
         const title = $a.text().trim()
         const href = $a.attr('href') ?? ''
-        if (!title || title === '제목') return
+        if (!title || title === '제목' || title.length < 2) return
+        if (!href || href === '#' || href.startsWith('javascript:')) return
 
-        const fullUrl = href.startsWith('http') ? href : `${BASE}${href}`
-        const dateText = $el.find('td').last().text().trim()
-        const isImportant = $el.find('.notice, .important').length > 0
+        const fullUrl = href.startsWith('http') ? href : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
+        if (!isValidUrl(fullUrl)) return
+
+        const tds = $el.find('td')
+        const dateText = tds.last().text().trim()
+        const isImportant = $el.find('.notice, .important, .ico_notice').length > 0
 
         all.push({
           organization_id: 'mohw',

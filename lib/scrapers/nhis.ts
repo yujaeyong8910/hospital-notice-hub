@@ -3,6 +3,15 @@ import { CrawledNotice } from '@/types'
 
 const BASE = 'https://www.nhis.or.kr'
 
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export async function scrapeNHIS(): Promise<CrawledNotice[]> {
   const endpoints = [
     { url: `${BASE}/nhis/together/wbhaec07300m01.do`, category: '공지사항' },
@@ -16,6 +25,7 @@ export async function scrapeNHIS(): Promise<CrawledNotice[]> {
       const res = await fetch(ep.url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          Accept: 'text/html,application/xhtml+xml',
         },
         signal: AbortSignal.timeout(12000),
       })
@@ -28,11 +38,15 @@ export async function scrapeNHIS(): Promise<CrawledNotice[]> {
         const $a = $el.find('a').first()
         const title = $a.text().trim()
         const href = $a.attr('href') ?? ''
-        if (!title) return
+        if (!title || title.length < 2) return
+        if (!href || href === '#' || href.startsWith('javascript:')) return
 
-        const fullUrl = href.startsWith('http') ? href : href ? `${BASE}${href}` : ep.url
+        const fullUrl = href.startsWith('http') ? href : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
+        if (!isValidUrl(fullUrl)) return
+
         const tds = $el.find('td')
         const dateText = tds.last().text().trim()
+        const isImportant = $el.hasClass('notice') || $el.find('.mark_notice, .ico_notice').length > 0
 
         all.push({
           organization_id: 'nhis',
@@ -40,6 +54,7 @@ export async function scrapeNHIS(): Promise<CrawledNotice[]> {
           url: fullUrl,
           category: ep.category,
           published_at: parseDateStr(dateText) ?? undefined,
+          is_important: isImportant,
         })
       })
     } catch {

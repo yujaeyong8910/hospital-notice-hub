@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Header } from '@/components/layout/Header'
 import { NoticeCard } from '@/components/notices/NoticeCard'
 import { Notice } from '@/types'
@@ -18,14 +18,14 @@ function NoticesContent() {
   const [notices, setNotices] = useState<Notice[]>([])
   const [loading, setLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
-  const [offset, setOffset] = useState(0)
+  const offsetRef = useRef(0)
   const [orgFilter, setOrgFilter] = useState(searchParams.get('org') ?? '')
   const [importantOnly, setImportantOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') ?? '')
 
   const fetchNotices = useCallback(async (reset = false) => {
     setLoading(true)
-    const currentOffset = reset ? 0 : offset
+    const currentOffset = reset ? 0 : offsetRef.current
     const params = new URLSearchParams({
       limit: String(LIMIT),
       offset: String(currentOffset),
@@ -40,18 +40,18 @@ function NoticesContent() {
 
     if (reset) {
       setNotices(fetched)
-      setOffset(LIMIT)
+      offsetRef.current = LIMIT
     } else {
       setNotices((prev) => [...prev, ...fetched])
-      setOffset((prev) => prev + LIMIT)
+      offsetRef.current += LIMIT
     }
     setHasMore(fetched.length === LIMIT)
     setLoading(false)
-  }, [orgFilter, importantOnly, searchQuery, offset])
+  }, [orgFilter, importantOnly, searchQuery])
 
   useEffect(() => {
     fetchNotices(true)
-  }, [orgFilter, importantOnly, searchQuery]) // eslint-disable-line
+  }, [fetchNotices])
 
   return (
     <>

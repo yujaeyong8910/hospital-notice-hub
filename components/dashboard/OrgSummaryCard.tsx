@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { Notice } from '@/types'
-import { ORG_META, timeAgo } from '@/lib/utils'
+import { ORG_META, timeAgo, formatDate } from '@/lib/utils'
 
 interface OrgSummaryCardProps {
   orgId: string
@@ -41,7 +41,9 @@ export function OrgSummaryCard({ orgId, notices }: OrgSummaryCardProps) {
                 {notice.title}
               </p>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-gray-400">{timeAgo(notice.published_at ?? notice.created_at)}</span>
+                <span className="text-xs text-gray-400">
+                  {notice.published_at ? timeAgo(notice.published_at) : formatDate(notice.created_at)}
+                </span>
                 <a
                   href={notice.url}
                   target="_blank"

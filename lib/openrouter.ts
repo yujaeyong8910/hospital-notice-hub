@@ -18,8 +18,8 @@ export async function chat(messages: Message[], options: ChatOptions = {}) {
     headers: {
       Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://localhost:3000',
-      'X-Title': '병원 업무 공지 허브',
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+      'X-Title': '좋은삼선병원 공지 허브',
     },
     body: JSON.stringify({
       model: options.model ?? 'openai/gpt-4o-mini',

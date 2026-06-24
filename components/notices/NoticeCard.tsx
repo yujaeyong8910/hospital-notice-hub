@@ -35,7 +35,7 @@ export function NoticeCard({ notice, compact = false }: NoticeCardProps) {
             )}
           </div>
           <span className="text-xs text-gray-400 shrink-0 mt-0.5">
-            {timeAgo(notice.published_at ?? notice.created_at)}
+            {notice.published_at ? timeAgo(notice.published_at) : formatDate(notice.created_at)}
           </span>
         </div>
 
@@ -52,7 +52,9 @@ export function NoticeCard({ notice, compact = false }: NoticeCardProps) {
         )}
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">{formatDate(notice.published_at ?? notice.created_at)}</span>
+          <span className="text-xs text-gray-400">
+            {notice.published_at ? formatDate(notice.published_at) : `수집: ${formatDate(notice.created_at)}`}
+          </span>
           <div className="flex items-center gap-2">
             {notice.view_count > 0 && (
               <span className="flex items-center gap-1 text-xs text-gray-400">

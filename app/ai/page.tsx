@@ -1,5 +1,8 @@
+'use client'
+
+import { useRef } from 'react'
 import { Header } from '@/components/layout/Header'
-import { ChatPanel } from '@/components/ai/ChatPanel'
+import { ChatPanel, ChatPanelHandle } from '@/components/ai/ChatPanel'
 import { BookOpen, Scale, FileText, HelpCircle } from 'lucide-react'
 
 const quickQuestions = [
@@ -10,6 +13,8 @@ const quickQuestions = [
 ]
 
 export default function AIPage() {
+  const chatRef = useRef<ChatPanelHandle>(null)
+
   return (
     <>
       <Header
@@ -23,6 +28,7 @@ export default function AIPage() {
             {quickQuestions.map(({ icon: Icon, text }) => (
               <button
                 key={text}
+                onClick={() => chatRef.current?.sendQuestion(text)}
                 className="flex items-start gap-2.5 p-3 bg-white rounded-xl border border-gray-200 text-left hover:border-blue-300 hover:shadow-sm transition-all group"
               >
                 <Icon className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
@@ -33,7 +39,10 @@ export default function AIPage() {
 
           {/* Chat panel */}
           <div className="flex-1 min-h-0">
-            <ChatPanel placeholder="건강보험 청구, 심사기준, 법령 해석 등 업무 관련 질문을 입력하세요..." />
+            <ChatPanel
+              ref={chatRef}
+              placeholder="건강보험 청구, 심사기준, 법령 해석 등 업무 관련 질문을 입력하세요..."
+            />
           </div>
 
           <p className="text-center text-xs text-gray-400 shrink-0">

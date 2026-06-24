@@ -8,7 +8,6 @@ import {
   Bell,
   Bot,
   ExternalLink,
-  Building2,
   ChevronRight,
 } from 'lucide-react'
 
@@ -33,11 +32,13 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-700">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
+          <img
+            src="/logo.PNG"
+            alt="좋은삼선병원 로고"
+            className="w-9 h-9 object-contain rounded-lg"
+          />
           <div>
-            <p className="font-bold text-sm leading-tight">병원 업무</p>
+            <p className="font-bold text-sm leading-tight">좋은삼선병원</p>
             <p className="text-xs text-gray-400 leading-tight">공지 허브</p>
           </div>
         </div>

@@ -17,10 +17,7 @@ export function Header({ title, subtitle }: HeaderProps) {
   async function handleCrawl() {
     setCrawling(true)
     try {
-      await fetch('/api/crawl', {
-        method: 'POST',
-        headers: { authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET ?? ''}` },
-      })
+      await fetch('/api/crawl')
       router.refresh()
     } finally {
       setCrawling(false)
