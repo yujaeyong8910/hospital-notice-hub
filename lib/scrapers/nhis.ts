@@ -14,7 +14,7 @@ function isValidUrl(url: string): boolean {
 
 export async function scrapeNHIS(): Promise<CrawledNotice[]> {
   const endpoints = [
-    { url: `${BASE}/nhis/together/wbhaec07300m01.do`, category: '공지사항' },
+    { url: `${BASE}/nhis/together/wbhaea01000m01.do`, category: '공지사항' },
     { url: `${BASE}/nhis/together/wbhaec07200m01.do`, category: '보도자료' },
   ]
 
