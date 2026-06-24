@@ -110,7 +110,11 @@ export default function NoticeDetailPage() {
                       )}
                     </div>
                     <a
-                      href={notice.url}
+                      href={
+                        notice.organization_id === 'hira'
+                          ? `/api/hira/view?url=${encodeURIComponent(notice.url)}`
+                          : notice.url
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors shrink-0"

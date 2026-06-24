@@ -63,7 +63,11 @@ export function NoticeCard({ notice, compact = false }: NoticeCardProps) {
               </span>
             )}
             <a
-              href={notice.url}
+              href={
+                notice.organization_id === 'hira'
+                  ? `/api/hira/view?url=${encodeURIComponent(notice.url)}`
+                  : notice.url
+              }
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
