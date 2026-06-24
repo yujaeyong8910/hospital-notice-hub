@@ -82,7 +82,7 @@ ${context ? `## 현재 보고 있는 공지\n${context}` : ''}`
         { role: 'system', content: systemPrompt },
         ...messages,
       ],
-      { stream: true, max_tokens: 3000, model: 'anthropic/claude-3.5-haiku' }
+      { stream: true, max_tokens: 3000, model: 'anthropic/claude-haiku-4.5' }
     )
 
     return new NextResponse(res.body, {
