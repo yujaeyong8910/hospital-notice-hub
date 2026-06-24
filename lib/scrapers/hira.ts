@@ -1,85 +1,128 @@
-import * as cheerio from 'cheerio'
 import { CrawledNotice } from '@/types'
 
-const BASE = 'https://www.hira.or.kr'
+const BASE = 'https://biz.hira.or.kr'
+const LIST_URL = `${BASE}/qya/bbs/selectComBbsList.ndo`
+const RS = '\x1e'
+const US = '\x1f'
+const NUL = '\x03'
 
-function isValidUrl(url: string): boolean {
-  try {
-    const u = new URL(url)
-    return u.protocol === 'http:' || u.protocol === 'https:'
-  } catch {
-    return false
+const BOARDS = [
+  { bbsId: 'BBSMSTR_000000000675', category: '공지사항' },
+]
+
+function buildSsvBody(bbsId: string): string {
+  const rows = [
+    'SSV:utf-8',
+    'JSESSIONID=null',
+    'BIZINTERSESSION=',
+    'WMONID=NoticeHub01',
+    'browserType=Chrome',
+    'osVersion=Windows 10',
+    'navigatorName=Chrome',
+    'navigatorVersion=109',
+    'Dataset:dsParam',
+    [
+      '_RowType_', 'brdTyBltNo:STRING(256)', 'bltNo:STRING(256)', 'totCnt:STRING(256)',
+      'currentPage:STRING(256)', 'recordCountPerPage:STRING(256)', 'firstIndex:STRING(256)',
+      'lastIndex:STRING(256)', 'bbsId:STRING(256)', 'cbSearchCnd:STRING(256)',
+      'edSearchWrd:STRING(256)', 'nttId:STRING(256)', 'atchFileId:STRING(256)',
+      'codeId:STRING(256)', 'catType01Val:STRING(256)', 'catType02Val:STRING(256)',
+      'catType03Val:STRING(256)',
+    ].join(US),
+    ['N', '', '', '', '1', '20', '0', '20', bbsId, 'all', NUL, '', '', '', '', '', ''].join(US),
+    '',
+    'Dataset:gdsCurrentMenu',
+    [
+      '_RowType_', 'menuId:STRING(256)', 'menuNm:STRING(256)', 'urlDtlAddr:STRING(256)',
+      'sysCd:STRING(256)', 'scnId:STRING(256)', 'locToDown:STRING(256)', 'hiSysCd:STRING(256)',
+      'bPopupYn:STRING(256)', 'seAdtYn:STRING(256)', 'formId:STRING(256)',
+      'winId:STRING(256)', 'params:STRING(256)',
+    ].join(US),
+    '',
+    '',
+  ]
+  return rows.join(RS)
+}
+
+function parseSsvResponse(text: string): Array<Record<string, string>> {
+  const sections = text.split(RS)
+  const results: Array<Record<string, string>> = []
+  let inMain = false
+  let fields: string[] = []
+
+  for (const section of sections) {
+    if (section.startsWith('Dataset:dsMain')) {
+      inMain = true
+      continue
+    }
+    if (inMain && section.startsWith('Dataset:')) {
+      break
+    }
+    if (inMain && section.startsWith('_RowType_')) {
+      fields = section.split(US).map(f => f.split(':')[0])
+      continue
+    }
+    if (inMain && fields.length > 0 && (section.startsWith('N') || section.startsWith('U'))) {
+      const vals = section.split(US)
+      const row: Record<string, string> = {}
+      fields.forEach((name, i) => { row[name] = vals[i] ?? '' })
+      results.push(row)
+    }
   }
+  return results
+}
+
+function parseBizDate(str: string): string | null {
+  const m = str.match(/^(\d{4})(\d{2})(\d{2})/)
+  if (!m) return null
+  return `${m[1]}-${m[2]}-${m[3]}T00:00:00Z`
 }
 
 export async function scrapeHIRA(): Promise<CrawledNotice[]> {
-  const endpoints = [
-    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA020002000100`, category: '공지사항' },
-    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA020041000100`, category: '보도자료' },
-  ]
-
   const all: CrawledNotice[] = []
 
-  for (const ep of endpoints) {
+  for (const board of BOARDS) {
     try {
-      const res = await fetch(ep.url, {
+      const body = buildSsvBody(board.bbsId)
+      const res = await fetch(LIST_URL, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'text/xml',
+          Accept: 'application/xml, text/xml, */*',
+          Referer: `${BASE}/popup.ndo?formname=qya_bizcom%3A%3AInfoBank.xfdl&framename=InfoBank`,
+          Origin: BASE,
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          Referer: BASE,
-          Accept: 'text/html,application/xhtml+xml',
-          'Accept-Language': 'ko-KR,ko;q=0.9',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Cache-Control': 'no-cache, no-store',
+          Pragma: 'no-cache',
         },
-        signal: AbortSignal.timeout(12000),
+        body,
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) continue
-      const html = await res.text()
-      const $ = cheerio.load(html)
 
-      $('table tbody tr').each((_, el) => {
-        const $el = $(el)
-        const $a = $el.find('a').first()
-        const title = $a.text().trim()
-        const href = $a.attr('href') ?? ''
-        if (!title || title.length < 3) return
-        if (!href || href === '#' || href.startsWith('javascript:')) return
+      const text = await res.text()
+      if (!text.startsWith('SSV:')) continue
 
-        // href가 ?로 시작하면 endpoint 경로에 붙여야 함
-        const fullUrl = href.startsWith('http')
-          ? href
-          : href.startsWith('?')
-          ? `${ep.url.split('?')[0]}${href}`
-          : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
-        if (!isValidUrl(fullUrl)) return
-
-        const dateText = findDateText($el.find('td').toArray().map(td => $(td).text().trim()))
-        const isImportant = $el.hasClass('notice') || $el.find('.mark-notice, .ico_notice').length > 0
+      const rows = parseSsvResponse(text)
+      for (const row of rows) {
+        const title = row['nttSj'] ?? ''
+        const nttId = row['nttId'] ?? ''
+        if (!title || title.length < 2 || !nttId) continue
 
         all.push({
           organization_id: 'hira',
           title,
-          url: fullUrl,
-          category: ep.category,
-          published_at: parseDateStr(dateText) ?? undefined,
-          is_important: isImportant,
+          url: `${BASE}/popup.ndo?formname=qya_bizcom%3A%3AInfoBank.xfdl&framename=InfoBank&nttId=${nttId}&bbsId=${board.bbsId}`,
+          category: board.category,
+          published_at: parseBizDate(row['frstregisterPntt'] ?? '') ?? undefined,
+          is_important: row['isNotice'] === 'Y',
         })
-      })
+      }
     } catch {
       continue
     }
   }
 
   return all.slice(0, 30)
-}
-
-function findDateText(texts: string[]): string {
-  for (const t of texts) {
-    if (/\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}/.test(t) && t.length < 30) return t
-  }
-  return ''
-}
-
-function parseDateStr(str: string): string | null {
-  const m = str.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/)
-  if (!m) return null
-  return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}T00:00:00Z`
 }
