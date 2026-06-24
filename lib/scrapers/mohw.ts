@@ -14,9 +14,8 @@ function isValidUrl(url: string): boolean {
 
 export async function scrapeMOHW(): Promise<CrawledNotice[]> {
   const endpoints = [
-    { url: `${BASE}/react/al/salalm0301ls.do?menuId=MENU_NEW_01_02`, category: '공지사항' },
-    { url: `${BASE}/react/al/salalm0101ls.do?menuId=MENU_NEW_04_01`, category: '보도자료' },
-    { url: `${BASE}/react/al/salalm0401ls.do?menuId=MENU_NEW_04_04`, category: '법령·훈령' },
+    { url: `${BASE}/board.es?mid=a10501010000&bid=0003`, category: '공지사항' },
+    { url: `${BASE}/board.es?mid=a10503000000&bid=0027`, category: '보도자료' },
   ]
 
   const all: CrawledNotice[] = []
@@ -43,7 +42,9 @@ export async function scrapeMOHW(): Promise<CrawledNotice[]> {
         if (!title || title === '제목' || title.length < 2) return
         if (!href || href === '#' || href.startsWith('javascript:')) return
 
-        const fullUrl = href.startsWith('http') ? href : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
+        const fullUrl = href.startsWith('http')
+          ? href
+          : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
         if (!isValidUrl(fullUrl)) return
 
         const tds = $el.find('td')
