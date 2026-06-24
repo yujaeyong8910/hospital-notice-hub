@@ -15,7 +15,6 @@ function isValidUrl(url: string): boolean {
 export async function scrapeKHA(): Promise<CrawledNotice[]> {
   const endpoints = [
     { url: `${BASE}/kha_home/notice_list.do`, category: '공지사항' },
-    { url: `${BASE}/kha_home/press-release.do`, category: '보도자료' },
     { url: `${BASE}/kha_home/association-notice.do`, category: '협회공고' },
   ]
 

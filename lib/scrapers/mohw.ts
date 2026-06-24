@@ -15,7 +15,7 @@ function isValidUrl(url: string): boolean {
 export async function scrapeMOHW(): Promise<CrawledNotice[]> {
   const endpoints = [
     { url: `${BASE}/board.es?mid=a10501010000&bid=0003`, category: '공지사항' },
-    { url: `${BASE}/board.es?mid=a10503000000&bid=0027`, category: '보도자료' },
+    { url: `${BASE}/board.es?mid=a10409020000&bid=0026`, category: '고시/훈령' },
   ]
 
   const all: CrawledNotice[] = []
