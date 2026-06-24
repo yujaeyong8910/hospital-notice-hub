@@ -35,10 +35,11 @@ export async function scrapeKHA(): Promise<CrawledNotice[]> {
       const html = await res.text()
       const $ = cheerio.load(html)
 
-      $('table tbody tr').each((_, el) => {
+      // KHA는 div.tr / div.td 구조 (table 미사용)
+      $('div.tr').each((_, el) => {
         const $el = $(el)
         const $a = $el.find('a').first()
-        const title = $a.text().trim()
+        const title = ($a.find('span').text() || $a.text()).trim()
         const href = $a.attr('href') ?? ''
         if (!title || title.length < 2) return
         if (!href || href === '#' || href.startsWith('javascript:')) return
@@ -51,7 +52,7 @@ export async function scrapeKHA(): Promise<CrawledNotice[]> {
           : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
         if (!isValidUrl(fullUrl)) return
 
-        const dateText = $el.find('td').last().text().trim()
+        const dateText = $el.find('.tb_05').text().trim()
         const isImportant = $el.hasClass('notice') || $el.find('.icon_notice, .ico_notice').length > 0
 
         all.push({
