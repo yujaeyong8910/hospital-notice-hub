@@ -1,7 +1,8 @@
 import * as cheerio from 'cheerio'
 import { CrawledNotice } from '@/types'
 
-const BASE = 'https://www.hira.or.kr'
+const BASE = 'https://biz.hira.or.kr'
+const OLD_BASE = 'https://www.hira.or.kr'
 
 function isValidUrl(url: string): boolean {
   try {
@@ -14,9 +15,13 @@ function isValidUrl(url: string): boolean {
 
 export async function scrapeHIRA(): Promise<CrawledNotice[]> {
   const endpoints = [
-    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030001000100`, category: '공지사항' },
-    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030001000200`, category: '보도자료' },
-    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA030002000100`, category: '심사기준' },
+    // 요양기관정보마당 (biz.hira.or.kr) - 병원 실무용
+    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA020040000000`, category: '공지사항', base: BASE },
+    { url: `${BASE}/bbsDummy.do?pgmid=HIRAA020041000000`, category: '자료실', base: BASE },
+    // www.hira.or.kr 공지
+    { url: `${OLD_BASE}/bbsDummy.do?pgmid=HIRAA030001000100`, category: '공지사항', base: OLD_BASE },
+    { url: `${OLD_BASE}/bbsDummy.do?pgmid=HIRAA030001000200`, category: '보도자료', base: OLD_BASE },
+    { url: `${OLD_BASE}/bbsDummy.do?pgmid=HIRAA030002000100`, category: '심사기준', base: OLD_BASE },
   ]
 
   const all: CrawledNotice[] = []
@@ -26,7 +31,7 @@ export async function scrapeHIRA(): Promise<CrawledNotice[]> {
       const res = await fetch(ep.url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          Referer: BASE,
+          Referer: ep.base,
           Accept: 'text/html,application/xhtml+xml',
           'Accept-Language': 'ko-KR,ko;q=0.9',
         },
@@ -46,9 +51,7 @@ export async function scrapeHIRA(): Promise<CrawledNotice[]> {
 
         const fullUrl = href.startsWith('http')
           ? href
-          : href.startsWith('/')
-          ? `${BASE}${href}`
-          : `${BASE}/${href}`
+          : `${ep.base}${href.startsWith('/') ? '' : '/'}${href}`
 
         if (!isValidUrl(fullUrl)) return
 
