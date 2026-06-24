@@ -52,11 +52,8 @@ function splitBytes(buf: Uint8Array, sep: number): Uint8Array[] {
   return parts
 }
 
-// RS(0x1E)와 US(0x1F)는 ASCII 단일 바이트이므로 UTF-8·EUC-KR 모두 동일.
-// 필드명(ASCII)은 UTF-8로 파싱하고, 한글 필드값은 EUC-KR로 디코딩한다.
 function parseSsvDetailBytes(buf: Uint8Array): Record<string, string> | null {
   const utf8 = new TextDecoder('utf-8', { fatal: false })
-  const euckr = new TextDecoder('euc-kr')
 
   const sections = splitBytes(buf, RS_BYTE)
   let inDataset = false
@@ -76,14 +73,12 @@ function parseSsvDetailBytes(buf: Uint8Array): Record<string, string> | null {
       continue
     }
     if (inDataset && fields.length > 0 && (asUtf8.startsWith('N') || asUtf8.startsWith('U'))) {
-      // 필드값은 US(0x1F) 기준으로 바이트 분리 후 EUC-KR 디코딩
       const fieldParts = splitBytes(section, US_BYTE)
       const row: Record<string, string> = {}
       fields.forEach((name, i) => {
         const part = fieldParts[i]
         if (!part) return
-        // nttCn(본문 HTML)만 EUC-KR; nttSj(제목)를 포함한 나머지는 UTF-8
-        row[name] = (name === 'nttCn') ? euckr.decode(part) : utf8.decode(part)
+        row[name] = utf8.decode(part)
       })
       return row
     }
