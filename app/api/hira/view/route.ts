@@ -83,7 +83,7 @@ function parseSsvDetailBytes(buf: Uint8Array): Record<string, string> | null {
         const part = fieldParts[i]
         if (!part) return
         // nttCn(본문 HTML)만 EUC-KR; nttSj(제목)를 포함한 나머지는 UTF-8
-        row[name] = (name === 'nttCn') ? euckr.decode(part) : utf8.decode(part, { fatal: false })
+        row[name] = (name === 'nttCn') ? euckr.decode(part) : utf8.decode(part)
       })
       return row
     }
