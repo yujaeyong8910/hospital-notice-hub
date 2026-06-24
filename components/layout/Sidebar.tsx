@@ -21,7 +21,7 @@ const orgs = [
   { id: 'kha',  label: '대한병원협회',       color: '#1D4ED8', url: 'https://www.kha.or.kr' },
   { id: 'mohw', label: '보건복지부',         color: '#065F46', url: 'https://www.mohw.go.kr' },
   { id: 'nhis', label: '국민건강보험공단',   color: '#0E7490', url: 'https://www.nhis.or.kr' },
-  { id: 'hira', label: '건강보험심사평가원', color: '#7C3AED', url: 'https://www.hira.or.kr' },
+  { id: 'hira', label: '건강보험심사평가원', color: '#7C3AED', url: 'https://biz.hira.or.kr/index.do' },
 ]
 
 export function Sidebar() {

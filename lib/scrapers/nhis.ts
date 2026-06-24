@@ -41,7 +41,12 @@ export async function scrapeNHIS(): Promise<CrawledNotice[]> {
         if (!title || title.length < 2) return
         if (!href || href === '#' || href.startsWith('javascript:')) return
 
-        const fullUrl = href.startsWith('http') ? href : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
+        // href가 ?로 시작하면 endpoint 경로에 붙여야 정확한 URL이 됨
+        const fullUrl = href.startsWith('http')
+          ? href
+          : href.startsWith('?')
+          ? `${ep.url}${href}`
+          : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
         if (!isValidUrl(fullUrl)) return
 
         const tds = $el.find('td')
