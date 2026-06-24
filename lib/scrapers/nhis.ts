@@ -49,8 +49,7 @@ export async function scrapeNHIS(): Promise<CrawledNotice[]> {
           : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
         if (!isValidUrl(fullUrl)) return
 
-        const tds = $el.find('td')
-        const dateText = tds.last().text().trim()
+        const dateText = findDateText($el.find('td').toArray().map(td => $(td).text().trim()))
         const isImportant = $el.hasClass('notice') || $el.find('.mark_notice, .ico_notice').length > 0
 
         all.push({
@@ -68,6 +67,13 @@ export async function scrapeNHIS(): Promise<CrawledNotice[]> {
   }
 
   return all.slice(0, 30)
+}
+
+function findDateText(texts: string[]): string {
+  for (const t of texts) {
+    if (/\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}/.test(t) && t.length < 30) return t
+  }
+  return ''
 }
 
 function parseDateStr(str: string): string | null {

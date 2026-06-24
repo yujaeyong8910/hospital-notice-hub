@@ -52,7 +52,8 @@ export async function scrapeKHA(): Promise<CrawledNotice[]> {
           : `${BASE}${href.startsWith('/') ? '' : '/'}${href}`
         if (!isValidUrl(fullUrl)) return
 
-        const dateText = $el.find('.tb_05').text().trim()
+        const rawDate = $el.find('.tb_05').text().trim()
+        const dateText = rawDate || findDateText($el.find('[class]').toArray().map(el => $(el).text().trim()))
         const isImportant = $el.hasClass('notice') || $el.find('.icon_notice, .ico_notice').length > 0
 
         all.push({
@@ -70,6 +71,13 @@ export async function scrapeKHA(): Promise<CrawledNotice[]> {
   }
 
   return all.slice(0, 30)
+}
+
+function findDateText(texts: string[]): string {
+  for (const t of texts) {
+    if (/\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}/.test(t) && t.length < 30) return t
+  }
+  return ''
 }
 
 function parseDateStr(str: string): string | null {
